@@ -20,7 +20,7 @@ if [[ "$(sinfo | grep -w -E 'idle~|alloc' | grep -v 'alloc#' | awk '{print $4}' 
 fi
 
 if [[ "$1" ]]; then
-	sbatch -N $1 /lustre/job.sh > /tmp/sbatch.log
+	sbatch -N $1 /shared/job.sh > /tmp/sbatch.log
 fi
 
 job=$(awk '{print $4}' /tmp/sbatch.log)
@@ -42,7 +42,7 @@ done
 
 echo 'Start PreStackPro'
 
-NodeFile=/lustre/NodeFile
+NodeFile=/shared/NodeFile
 rm -rf $NodeFile && touch $NodeFile
 
 nodes=$(sinfo -o "%o" | grep -v -E 'hpc|NODE_ADDR' | xargs)
@@ -68,15 +68,15 @@ memtotal=$(echo $usemem| xargs -I {} echo "scale=1; {}/1024^2" | bc)
 memforuse=$(echo "$memtotal * $pspsetting_ramfactor" | bc -l)
 pspsetting_ram=$(echo $memforuse | awk '{printf("%d\n",$1 + 0.5)}')
 
-/lustre/PreStackPro/662/bin/PreStackPro -a -u pspuser -b /lustre/PreStackPro/662/bin/PreStackProBackend --ssh-private-key ~/.ssh/id_rsa -m $(head -1 $NodeFile) --nodefile $NodeFile -s $pspsetting_ram -p /lustre \
---shutdown-script /lustre/shutdown.sh
+/shared/PreStackPro/662/bin/PreStackPro -a -u pspuser -b /shared/PreStackPro/662/bin/PreStackProBackend --ssh-private-key ~/.ssh/id_rsa -m $(head -1 $NodeFile) --nodefile $NodeFile -s $pspsetting_ram -p /shared \
+--shutdown-script /shared/shutdown.sh
 
 echo
 echo 'Check slurm jobs. Waiting...'
 sleep 3
 
 if [[ $(squeue | grep hpc ) ]]; then
-	echo 'You need to remove all jobs manually or start /lustre/shutdown.sh'
+	echo 'You need to remove all jobs manually or start /shared/shutdown.sh'
 else
 	echo 'Delete all jobs.'
 fi
