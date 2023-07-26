@@ -14,3 +14,4 @@ sudo echo "*          -       memlock   unlimited" >> /etc/security/limits.d/10-
 #sudo systemctl enable slurmctld
 
 wget https://raw.githubusercontent.com/kurtselbach/sharpreflections_public/main/aws/start.sh -O /data_parallel/start.sh
+chmod +x /data_parallel/start.sh
