@@ -1,9 +1,8 @@
 #!/bin/bash
 
 if [[ ! "$1" ]]; then
-	echo
-	echo 'Type how nodes do you need. For example: ./start.sh N'
-	echo
+        echo "Please specify the number of nodes you require: ./start.sh N"
+        echo "To request 4 nodes please launch like this: ./start.sh 4"
 	exit
 fi
 
