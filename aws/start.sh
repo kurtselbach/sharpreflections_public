@@ -1,6 +1,7 @@
 #!/bin/bash
 
 psprobin='/shared/PreStackPro/bin'
+queue_name=$(sinfo -s -h | awk '{print $1}' | sed 's/*//g')
 
 if [[ ! "$1" ]]; then
         echo "Please specify the number of nodes you require: ./start.sh N"
@@ -35,12 +36,12 @@ echo
 echo 'Start job '$job' on '$1' node(s). Waiting...'
 sleep 5
 
-while [[ "$(squeue -j $job | grep hpc | awk '{print $5}')" == "CF" ]]
+while [[ "$(squeue -j $job | grep $queue_name | awk '{print $5}')" == "CF" ]]
 do
 	sleep 5
 done
 
-while [[ ! "$(squeue -j $job | grep hpc | awk '{print $5}')" == "R" ]]
+while [[ ! "$(squeue -j $job | grep $queue_name | awk '{print $5}')" == "R" ]]
 do
 	echo 'Nodes are not ready. Waiting...'
 	sleep 5
@@ -51,7 +52,7 @@ echo 'Start PreStackPro'
 NodeFile=/shared/NodeFile
 rm -rf $NodeFile && touch $NodeFile
 
-#nodes=$(sinfo -o "%o" | grep -v -E 'hpc|NODE_ADDR' | xargs)
+#nodes=$(sinfo -o "%o" | grep -v -E "$queue_name|NODE_ADDR" | xargs)
 
 #for i in $nodes
 #do
@@ -81,7 +82,7 @@ pspsetting_ram=$(echo $memforuse | awk '{printf("%d\n",$1 + 0.5)}')
 
 cat > /shared/shutdown.sh <<'EOF'
 #!/bin/bash
-for i in $(squeue | grep hpc | awk '{print $1}' | xargs)
+for i in $(squeue | grep $queue_name | awk '{print $1}' | xargs)
 do
 	scancel $i
 done
@@ -95,7 +96,7 @@ echo
 echo 'Check slurm jobs. Waiting...'
 sleep 3
 
-if [[ $(squeue | grep hpc ) ]]; then
+if [[ $(squeue | grep $queue_name ) ]]; then
 	echo 'You need to remove all jobs manually or start /shared/shutdown.sh'
 else
 	echo 'Delete all jobs.'
