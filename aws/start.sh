@@ -1,5 +1,7 @@
 #!/bin/bash
 
+psprobin='/shared/PreStackPro/bin'
+
 if [[ ! "$1" ]]; then
         echo "Please specify the number of nodes you require: ./start.sh N"
         echo "To request 4 nodes please launch like this: ./start.sh 4"
@@ -86,7 +88,7 @@ done
 EOF
 chmod +x /shared/shutdown.sh
 
-/shared/PreStackPro/bin/PreStackPro -a -u $(echo $USER) -b /shared/PreStackPro/bin/PreStackProBackend --ssh-private-key ~/.ssh/id_rsa -m $(head -1 $NodeFile) --nodefile $NodeFile -s $pspsetting_ram -p /shared \
+$psprobin/PreStackPro -u $(echo $USER) -b $psprobin/PreStackProBackend --ssh-private-key ~/.ssh/id_rsa -m $(head -1 $NodeFile) --nodefile $NodeFile -s $pspsetting_ram -p /shared \
 --shutdown-script /shared/shutdown.sh
 
 echo
