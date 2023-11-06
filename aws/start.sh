@@ -20,7 +20,7 @@ fi
 ##############################################
 rm -rf /tmp/sbatch.log
 
-if [[ "$(sinfo | grep -w -E 'idle~|alloc' | grep -v 'alloc#' | awk '{print $4}' | awk -F',' '{sum+=$1;}END{print sum;}')" -lt "$1" ]]; then
+if [[ "$(sinfo | grep -w -E 'idle|alloc' | grep -v 'alloc#' | awk '{print $4}' | awk -F',' '{sum+=$1;}END{print sum;}')" -lt "$1" ]]; then
 	echo
 	echo "You don't have free $1 nodes"
 	echo
@@ -42,7 +42,13 @@ EOF
 ##############################################
 if [[ "$1" ]]; then
 	sbatch -N $1 /shared/job.sh > /tmp/sbatch.log
+	if [ ! "$?" -eq 0 ]; then
+		echo "Unable to submit job, is compute fleet running?"
+		cat /tmp/sbatch.log
+		exit
+	fi
 fi
+
 
 job=$(awk '{print $4}' /tmp/sbatch.log)
 
@@ -96,13 +102,23 @@ memforuse=$(echo "$memtotal * $pspsetting_ramfactor" | bc -l)
 pspsetting_ram=$(echo $memforuse | awk '{printf("%d\n",$1 + 0.5)}')
 
 ##############################################
+# Check ssh key
+##############################################
+if [ -f "$HOME/.ssh/id_ed25519" ]; then
+	sshkeypath="$HOME/.ssh/id_ed25519"
+else
+	sshkeypath="$HOME/.ssh/id_rsa"
+fi	
+
+##############################################
 # Add shutdown script
 ##############################################
-cat > /shared/shutdown.sh <<'EOF'
+rm /shared/shutdown.sh
+cat << EOF > /shared/shutdown.sh
 #!/bin/bash
 for i in $(squeue | grep $queue_name | awk '{print $1}' | xargs)
 do
-	scancel $i
+	scancel \$i
 done
 EOF
 chmod +x /shared/shutdown.sh
@@ -110,7 +126,7 @@ chmod +x /shared/shutdown.sh
 ##############################################
 # Start PreStack Pro
 ##############################################
-$psprobin/PreStackPro -u $(echo $USER) -b $psprobin/PreStackProBackend --ssh-private-key ~/.ssh/id_rsa -m $(head -1 $NodeFile) --nodefile $NodeFile -s $pspsetting_ram -p /shared \
+$psprobin/PreStackPro -u $(echo $USER) -b $psprobin/PreStackProBackend --ssh-private-key $sshkeypath -m $(head -1 $NodeFile) --nodefile $NodeFile -s $pspsetting_ram -p /shared \
 --shutdown-script /shared/shutdown.sh
 
 ##############################################
